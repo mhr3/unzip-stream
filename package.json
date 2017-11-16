@@ -16,7 +16,9 @@
   "license": "MIT",
   "dependencies": {
     "binary": "^0.3.0",
-    "mkdirp": "^0.5.1"
+    "mkdirp": "^0.5.1",
+    "iconv": "^2.2.3",
+    "jschardet": "^1.4.2"
   },
   "devDependencies": {
     "tap": ">= 0.3.0 < 1",
