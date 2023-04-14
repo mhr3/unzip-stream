@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+
+jobs:
+  # linting & prettier
+  #linting:
+  #  name: Linting & Prettier
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #    - run: npm i
+  #    - run: npm run lint
+  #    - run: npm run pretty:fix
+  #    - run: npm run pretty
+  # tests
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm i
+      - run: npm test

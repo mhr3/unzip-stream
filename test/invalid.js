@@ -1,28 +1,25 @@
-'use strict';
+const test = require('tap').test;
+const fs = require('fs');
+const path = require('path');
+const unzip = require('../');
 
-var test = require('tap').test;
-var fs = require('fs');
-var path = require('path');
-var temp = require('temp');
-var dirdiff = require('dirdiff');
-var unzip = require('../');
+test('parse archive w/ no signature', (t) => {
+  const archive = path.join(__dirname, '../testData/invalid/archive.zip');
 
-test("parse archive w/ no signature", function (t) {
-  var archive = path.join(__dirname, '../testData/invalid/archive.zip');
-
-  var self = this;
-  var gotError = false;
-  var unzipParser = unzip.Parse();
+  const gotError = false;
+  const unzipParser = new unzip.Parse();
   fs.createReadStream(archive).pipe(unzipParser);
-  unzipParser.on('error', function(err) {
+  unzipParser.on('error', (err) => {
     if (err.message.indexOf('Not a valid') === -1) {
       throw new Error('Expected invalid archive error');
     }
     t.end();
   });
 
-  unzipParser.on('close', function() {
-    if (gotError) return;
+  unzipParser.on('close', () => {
+    if (gotError) {
+      return;
+    }
     throw new Error('Expected an error');
   });
 });

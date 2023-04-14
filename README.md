@@ -10,7 +10,7 @@ Please note that the zip file format isn't really meant to be processed by strea
 ## Installation
 
 ```bash
-$ npm install unzip-stream
+> npm install unzip-stream
 ```
 
 ## Quick Examples
@@ -24,12 +24,12 @@ contents. Otherwise the stream will get stuck.
 
 ```javascript
 fs.createReadStream('path/to/archive.zip')
-  .pipe(unzip.Parse())
-  .on('entry', function (entry) {
+  .pipe(new unzip.Parse())
+  .on('entry', (entry) => {
     var filePath = entry.path;
     var type = entry.type; // 'Directory' or 'File'
     var size = entry.size; // might be undefined in some archives
-    if (filePath === "this IS the file I'm looking for") {
+    if (filePath === `this IS the file I'm looking for`) {
       entry.pipe(fs.createWriteStream('output/path'));
     } else {
       entry.autodrain();
@@ -45,14 +45,13 @@ Example using `stream.Transform`:
 
 ```js
 fs.createReadStream('path/to/archive.zip')
-  .pipe(unzip.Parse())
+  .pipe(new unzip.Parse())
   .pipe(stream.Transform({
     objectMode: true,
-    transform: function(entry,e,cb) {
-      var filePath = entry.path;
-      var type = entry.type; // 'Directory' or 'File'
-      var size = entry.size;
-      if (filePath === "this IS the file I'm looking for") {
+    transform: (entry, e, cb) => {
+      const { path, type, size } = entry;
+
+      if (path === `this IS the file I'm looking for`) {
         entry.pipe(fs.createWriteStream('output/path'))
           .on('finish',cb);
       } else {
@@ -65,16 +64,25 @@ fs.createReadStream('path/to/archive.zip')
 ```
 
 ### Extract to a directory
+
 ```javascript
-fs.createReadStream('path/to/archive.zip').pipe(unzip.Extract({ path: 'output/path' }));
+fs.createReadStream('path/to/archive.zip').pipe(
+  new unzip.Extract({ path: 'output/path' })
+);
 ```
 
 Extract will emit the 'close' event when the archive is fully extracted, do NOT use the 'finish' event, which can be emitted before the writing finishes.
 
 ### Extra options
+
 The `Parse` and `Extract` methods allow passing an object with `decodeString` property which will be used to decode non-utf8 file names in the archive. If not specified a fallback will be used.
+
 ```javascript
-let parser = unzip.Parse({ decodeString: (buffer) => { return iconvLite.decode(buffer, 'iso-8859-2'); } });
+let parser = new unzip.Parse({
+  decodeString: (buffer) => {
+    return iconvLite.decode(buffer, 'iso-8859-2');
+  }
+});
 input.pipe(parser).pipe(...);
 ```
 
