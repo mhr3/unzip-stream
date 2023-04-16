@@ -1,4 +1,4 @@
-# unzip-stream [![Build Status](https://travis-ci.org/mhr3/unzip-stream.svg?branch=master)](https://travis-ci.org/mhr3/unzip-stream)
+# unzip-stream
 
 Streaming cross-platform unzip tool written in node.js.
 
@@ -10,7 +10,7 @@ Please note that the zip file format isn't really meant to be processed by strea
 ## Installation
 
 ```bash
-> npm install unzip-stream
+> npm install @instamotion/unzip-stream
 ```
 
 ## Quick Examples
@@ -24,7 +24,7 @@ contents. Otherwise the stream will get stuck.
 
 ```javascript
 const fs = require('fs');
-const unzip = require('unzip');
+const unzip = require('@instamotion/unzip');
 
 fs.createReadStream('path/to/archive.zip')
   .pipe(new unzip.Parse())
@@ -47,7 +47,7 @@ Example using `stream.Transform`:
 ```javascript
 const fs = require('fs');
 const stream = require('stream');
-const unzip = require('unzip');
+const unzip = require('@instamotion/unzip');
 
 fs.createReadStream('path/to/archive.zip')
   .pipe(new unzip.Parse())
@@ -72,7 +72,7 @@ fs.createReadStream('path/to/archive.zip')
 
 ```javascript
 const fs = require('fs');
-const unzip = require('unzip');
+const unzip = require('@instamotion/unzip');
 
 fs.createReadStream('path/to/archive.zip').pipe(
   new unzip.Extract({ path: 'output/path' })
@@ -88,7 +88,7 @@ The `Parse` and `Extract` methods allow passing an object with `decodeString` pr
 Example with `iconv-lite`:
 
 ```javascript
-const unzip = require('unzip');
+const unzip = require('@instamotion/unzip');
 const iconvLite = require('iconv-lite');
 
 let parser = new unzip.Parse({
@@ -98,15 +98,6 @@ let parser = new unzip.Parse({
 });
 input.pipe(parser).pipe(...);
 ```
-
-### Change history
-
-- 0.3.0 - Added full support for Zip64
-- 0.2.3 - Fix compatibility with node4
-- 0.2.2 - Better handling of unicode file names
-- 0.2.0 - Make Extract() emit 'close' only once all files are written
-- 0.1.2 - Deal with non-zip64 files larger than 4GB
-- 0.1.0 - Implemented new streaming engine
 
 ### What's missing?
 
