@@ -23,12 +23,13 @@ __Important__: If you do not intend to consume an entry stream's raw data, call 
 contents. Otherwise the stream will get stuck.
 
 ```javascript
+const fs = require('fs');
+const unzip = require('unzip');
+
 fs.createReadStream('path/to/archive.zip')
   .pipe(new unzip.Parse())
   .on('entry', (entry) => {
-    var filePath = entry.path;
-    var type = entry.type; // 'Directory' or 'File'
-    var size = entry.size; // might be undefined in some archives
+    const { path: filePath, type, size } = entry;
     if (filePath === `this IS the file I'm looking for`) {
       entry.pipe(fs.createWriteStream('output/path'));
     } else {
@@ -43,17 +44,21 @@ If you `pipe` from unzip-stream the downstream components will receive each `ent
 
 Example using `stream.Transform`:
 
-```js
+```javascript
+const fs = require('fs');
+const stream = require('stream');
+const unzip = require('unzip');
+
 fs.createReadStream('path/to/archive.zip')
   .pipe(new unzip.Parse())
   .pipe(stream.Transform({
     objectMode: true,
     transform: (entry, e, cb) => {
-      const { path, type, size } = entry;
+      const { path: filePath, type, size } = entry;
 
-      if (path === `this IS the file I'm looking for`) {
+      if (filePath === `this IS the file I'm looking for`) {
         entry.pipe(fs.createWriteStream('output/path'))
-          .on('finish',cb);
+          .on('finish', cb);
       } else {
         entry.autodrain();
         cb();
@@ -66,6 +71,9 @@ fs.createReadStream('path/to/archive.zip')
 ### Extract to a directory
 
 ```javascript
+const fs = require('fs');
+const unzip = require('unzip');
+
 fs.createReadStream('path/to/archive.zip').pipe(
   new unzip.Extract({ path: 'output/path' })
 );
@@ -77,7 +85,12 @@ Extract will emit the 'close' event when the archive is fully extracted, do NOT 
 
 The `Parse` and `Extract` methods allow passing an object with `decodeString` property which will be used to decode non-utf8 file names in the archive. If not specified a fallback will be used.
 
+Example with `iconv-lite`:
+
 ```javascript
+const unzip = require('unzip');
+const iconvLite = require('iconv-lite');
+
 let parser = new unzip.Parse({
   decodeString: (buffer) => {
     return iconvLite.decode(buffer, 'iso-8859-2');

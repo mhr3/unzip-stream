@@ -1,5 +1,5 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-yarn lint-staged
-yarn lint-branch-name
+npm run lint-staged
+npm run lint-branch-name
