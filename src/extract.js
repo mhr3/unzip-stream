@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const mkdirp = require('mkdirp');
+const { mkdirp } = require('mkdirp')
 const Transform = require('stream').Transform;
 const UnzipStream = require('./unzip-stream');
 
@@ -67,22 +67,24 @@ class Extract extends Transform {
     }
 
     // FIXME: calls to mkdirp can still be duplicated
-    mkdirp(directory, (err) => {
-      if (err) {
-        return this.emit('error', err);
-      }
+    mkdirp(directory)
+      .then(() => {
+        this.createdDirectories[directory] = true;
 
-      this.createdDirectories[directory] = true;
+        if (entry.isDirectory) {
+          this.unfinishedEntries--;
+          this._notifyAwaiter();
 
-      if (entry.isDirectory) {
-        this.unfinishedEntries--;
-        this._notifyAwaiter();
+          return;
+        }
 
-        return;
-      }
-
-      writeFileFn();
-    });
+        writeFileFn();
+      })
+      .catch((err) => {
+        if (err) {
+          return this.emit('error', err);
+        }
+      });
   }
 
   _notifyAwaiter() {

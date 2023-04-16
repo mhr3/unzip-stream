@@ -1,0 +1,22 @@
+{
+  "github": {
+    "release": true
+  },
+  "git": {
+    "commitMessage": "chore(release): v${version}",
+    "requireCleanWorkingDir": false,
+    "tag": true
+  },
+  "@release-it/conventional-changelog": {
+    "preset": "angular",
+    "infile": "CHANGELOG.md"
+  },
+  "hooks": {
+    "after:bump": "yarn install --mode=update-lockfile",
+    "before:init": "git fetch --prune --prune-tags origin"
+  },
+  "npm": {
+    "publish": false,
+    "ignoreVersion": false
+  }
+}

@@ -106,10 +106,6 @@ class UnzipStream extends Transform {
       return 0;
     }
 
-    const isUtf8 = (this.parsedEntity.flags & 0x800) !== 0;
-    const extraDataBuffer = chunk.slice(this.parsedEntity.fileNameLength, this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength);
-    const extra = this._readExtraFields(extraDataBuffer);
-
     switch (this.state) {
       case states.STREAM_START:
       case states.START:
@@ -175,8 +171,11 @@ class UnzipStream extends Transform {
 
         return requiredLength;
 
-      case states.LOCAL_FILE_HEADER_SUFFIX:
+      case states.LOCAL_FILE_HEADER_SUFFIX: {
         const entry = new Entry();
+        const isUtf8 = (this.parsedEntity.flags & 0x800) !== 0;
+        const extraDataBuffer = chunk.slice(this.parsedEntity.fileNameLength, this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength);
+        const extra = this._readExtraFields(extraDataBuffer);
         entry.path = this._decodeString(chunk.slice(0, this.parsedEntity.fileNameLength), isUtf8);
 
         if (extra && extra.parsed) {
@@ -207,15 +206,18 @@ class UnzipStream extends Transform {
         this.state = states.FILE_DATA;
 
         return requiredLength;
-
+      }
       case states.CENTRAL_DIRECTORY_FILE_HEADER:
         this.parsedEntity = this._readCentralDirectoryEntry(chunk);
         this.state = states.CENTRAL_DIRECTORY_FILE_HEADER_SUFFIX;
 
         return requiredLength;
 
-      case states.CENTRAL_DIRECTORY_FILE_HEADER_SUFFIX:
+      case states.CENTRAL_DIRECTORY_FILE_HEADER_SUFFIX: {
         // got file name in chunk[0..]
+        const isUtf8 = (this.parsedEntity.flags & 0x800) !== 0;
+        const extraDataBuffer = chunk.slice(this.parsedEntity.fileNameLength, this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength);
+        const extra = this._readExtraFields(extraDataBuffer);
         let path = this._decodeString(chunk.slice(0, this.parsedEntity.fileNameLength), isUtf8);
         if (extra && extra.parsed && extra.parsed.path && !isUtf8) {
           path = extra.parsed.path;
@@ -243,7 +245,7 @@ class UnzipStream extends Transform {
         this.state = states.START;
 
         return requiredLength;
-
+      }
       case states.CDIR64_END:
         this.parsedEntity = this._readEndOfCentralDirectory64(chunk);
         if (this.options.debug) {
@@ -362,6 +364,7 @@ class UnzipStream extends Transform {
 
       // try to skip over this entry
       this.outStreamInfo.stream.pipe(new Entry().autodrain());
+
       return;
     }
 

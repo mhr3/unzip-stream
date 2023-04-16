@@ -1,4 +1,7 @@
-/.idea
-/node_modules
-/testData-golang
-/testData-php
+.idea
+node_modules
+testData-golang
+testData-php
+.nyc_output
+coverage
+.DS_Store

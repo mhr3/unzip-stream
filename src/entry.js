@@ -1,4 +1,5 @@
 const PassThrough = require('stream').PassThrough;
+const Transform = require('stream').Transform;
 
 class Entry extends PassThrough {
   constructor() {
@@ -13,7 +14,7 @@ class Entry extends PassThrough {
   }
 
   autodrain() {
-    return this.pipe(new stream.Transform({ transform: (d, e, cb) => { cb(); } }));
+    return this.pipe(new Transform({ transform: (d, e, cb) => { cb(); } }));
   }
 }
 
