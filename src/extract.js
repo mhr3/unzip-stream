@@ -1,13 +1,15 @@
+/* eslint-disable no-underscore-dangle */
 const fs = require('fs');
 const path = require('path');
-const { mkdirp } = require('mkdirp')
-const Transform = require('stream').Transform;
+const { mkdirp } = require('mkdirp');
+const { Transform } = require('stream');
 const UnzipStream = require('./unzip-stream');
 
 class Extract extends Transform {
   constructor(opts) {
     super();
     if (!(this instanceof Extract)) {
+      // eslint-disable-next-line no-constructor-return
       return new Extract(opts);
     }
 
@@ -29,10 +31,13 @@ class Extract extends Transform {
 
   _flush(cb) {
     const done = () => {
-      process.nextTick(() => { this.emit('close'); });
+      process.nextTick(() => {
+        this.emit('close');
+      });
       cb();
-    }
+    };
 
+    // eslint-disable-next-line consistent-return
     this.unzipStream.end(() => {
       if (this.unfinishedEntries > 0) {
         this.afterFlushWait = true;
@@ -43,24 +48,25 @@ class Extract extends Transform {
     });
   }
 
+  // eslint-disable-next-line consistent-return
   _processEntry(entry) {
     const destPath = path.join(this.opts.path, entry.path);
     const directory = entry.isDirectory ? destPath : path.dirname(destPath);
 
-    this.unfinishedEntries++;
+    this.unfinishedEntries += 1;
 
     const writeFileFn = () => {
       const pipedStream = fs.createWriteStream(destPath);
 
       pipedStream.on('close', () => {
-        this.unfinishedEntries--;
+        this.unfinishedEntries -= 1;
         this._notifyAwaiter();
       });
       pipedStream.on('error', (error) => {
         this.emit('error', error);
       });
       entry.pipe(pipedStream);
-    }
+    };
 
     if (this.createdDirectories[directory] || directory === '.') {
       return writeFileFn();
@@ -72,7 +78,7 @@ class Extract extends Transform {
         this.createdDirectories[directory] = true;
 
         if (entry.isDirectory) {
-          this.unfinishedEntries--;
+          this.unfinishedEntries -= 1;
           this._notifyAwaiter();
 
           return;
@@ -80,6 +86,7 @@ class Extract extends Transform {
 
         writeFileFn();
       })
+      // eslint-disable-next-line consistent-return
       .catch((err) => {
         if (err) {
           return this.emit('error', err);

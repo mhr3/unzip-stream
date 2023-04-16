@@ -14,7 +14,7 @@ describe('pipe single entry', () => {
       write: (chunk, encoding, next) => {
         str += chunk.toString();
         next();
-      }
+      },
     });
 
     fs.createReadStream(archive)
@@ -22,7 +22,10 @@ describe('pipe single entry', () => {
       .on('entry', (entry) => {
         if (entry.path === 'file.txt') {
           writableStream.on('close', () => {
-            const fileStr = fs.readFileSync(path.join(__dirname, testDataDir, 'compressed-standard/inflated/file.txt'), 'utf8')
+            const fileStr = fs.readFileSync(
+              path.join(__dirname, testDataDir, 'compressed-standard/inflated/file.txt'),
+              'utf8'
+            );
             expect(str).toBe(fileStr);
           });
           entry.pipe(writableStream);

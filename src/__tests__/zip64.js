@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const temp = require('temp');
-const promisify = require('util').promisify;
-const callbackify = require('util').callbackify;
+const { promisify } = require('util');
+const { callbackify } = require('util');
 const dirdiff = require('./utils/dirdiff');
 const unzip = require('../../unzip');
 
@@ -30,14 +30,19 @@ describe('zip64', () => {
       throw err;
     });
     unzipExtractor.on('close', () => {
-      dirdiffCb(path.join(__dirname, testDataDir, 'zip64/inflated'), dirPath, {
-        fileContents: true
-      }, (err, diffs) => {
-        if (err) {
-          throw err;
+      dirdiffCb(
+        path.join(__dirname, testDataDir, 'zip64/inflated'),
+        dirPath,
+        {
+          fileContents: true,
+        },
+        (err, diffs) => {
+          if (err) {
+            throw err;
+          }
+          expect(diffs.length).toEqual(0);
         }
-        expect(diffs.length).toEqual(0);
-      });
+      );
     });
 
     fs.createReadStream(archive).pipe(unzipExtractor);
@@ -62,14 +67,19 @@ describe('zip64', () => {
       throw err;
     });
     unzipExtractor.on('close', () => {
-      dirdiffCb(path.join(__dirname, testDataDir, 'zip64-dd/inflated'), dirPath, {
-        fileContents: true
-      }, (err, diffs) => {
-        if (err) {
-          throw err;
+      dirdiffCb(
+        path.join(__dirname, testDataDir, 'zip64-dd/inflated'),
+        dirPath,
+        {
+          fileContents: true,
+        },
+        (err, diffs) => {
+          if (err) {
+            throw err;
+          }
+          expect(diffs.length).toEqual(0);
         }
-        expect(diffs.length).toEqual(0);
-      });
+      );
     });
 
     fs.createReadStream(archive).pipe(unzipExtractor);

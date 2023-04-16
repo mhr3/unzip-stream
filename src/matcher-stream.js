@@ -1,10 +1,11 @@
-const Transform = require('stream').Transform;
+const { Transform } = require('stream');
 
 class MatcherStream extends Transform {
   constructor(patternDesc, matchFn) {
     super();
 
     if (!(this instanceof MatcherStream)) {
+      // eslint-disable-next-line no-constructor-return
       return new MatcherStream();
     }
 
@@ -12,7 +13,9 @@ class MatcherStream extends Transform {
 
     this.pattern = Buffer.isBuffer(p) ? p : Buffer.from(p);
     this.requiredLength = this.pattern.length;
-    if (patternDesc.requiredExtraSize) this.requiredLength += patternDesc.requiredExtraSize;
+    if (patternDesc.requiredExtraSize) {
+      this.requiredLength += patternDesc.requiredExtraSize;
+    }
 
     this.data = Buffer.from('');
     this.bytesSoFar = 0;
@@ -26,7 +29,8 @@ class MatcherStream extends Transform {
       return;
     }
 
-    const matchIndex = this.data.indexOf(this.pattern, ignoreMatchZero ? 1 : 0);
+    const byteOffset = ignoreMatchZero ? 1 : 0;
+    const matchIndex = this.data.indexOf(this.pattern, byteOffset);
     if (matchIndex >= 0 && matchIndex + this.requiredLength > this.data.length) {
       if (matchIndex > 0) {
         const packet = this.data.subarray(0, matchIndex);
@@ -64,6 +68,7 @@ class MatcherStream extends Transform {
       return;
     }
 
+    // eslint-disable-next-line consistent-return
     return true;
   }
 

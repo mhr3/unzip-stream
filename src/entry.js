@@ -1,10 +1,11 @@
-const PassThrough = require('stream').PassThrough;
-const Transform = require('stream').Transform;
+const { PassThrough } = require('stream');
+const { Transform } = require('stream');
 
 class Entry extends PassThrough {
   constructor() {
     super();
     if (!(this instanceof Entry)) {
+      // eslint-disable-next-line no-constructor-return
       return new Entry();
     }
 
@@ -14,7 +15,13 @@ class Entry extends PassThrough {
   }
 
   autodrain() {
-    return this.pipe(new Transform({ transform: (d, e, cb) => { cb(); } }));
+    return this.pipe(
+      new Transform({
+        transform: (d, e, cb) => {
+          cb();
+        },
+      })
+    );
   }
 }
 

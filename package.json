@@ -23,6 +23,8 @@
   },
   "devDependencies": {
     "@instamotion/config-commitlint": "^0.9.0",
+    "@instamotion/config-prettier": "^0.9.0",
+    "@instamotion/eslint-config-backend": "^0.9.0",
     "@instamotion/lint-scripts": "^0.9.0",
     "commitlint": "^17.6.1",
     "glob": "^10.1.0",
@@ -52,10 +54,16 @@
     "lint-branch-name": "lint-branch-name",
     "commitlint": "commitlint",
     "test:coverage": "jest --coverage",
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "lint": "eslint ./src --ext .js",
+    "pretty": "prettier --check ./src",
+    "pretty:fix": "prettier --write ./src",
+    "lint:fix": "npm run lint -- --fix"
   },
   "lint-staged": {
     "src/**/*.(js|ts)": [
+      "npm run lint",
+      "npm run pretty",
       "npm run test"
     ]
   }

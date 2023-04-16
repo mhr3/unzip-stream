@@ -1,10 +1,11 @@
-const Transform = require('stream').Transform;
+const { Transform } = require('stream');
 const UnzipStream = require('./unzip-stream');
 
 class ParserStream extends Transform {
   constructor(opts) {
     super({ readableObjectMode: true });
     if (!(this instanceof ParserStream)) {
+      // eslint-disable-next-line no-constructor-return
       return new ParserStream(opts);
     }
 
@@ -25,7 +26,9 @@ class ParserStream extends Transform {
 
   _flush(cb) {
     this.unzipStream.end(() => {
-      process.nextTick(() => { this.emit('close'); });
+      process.nextTick(() => {
+        this.emit('close');
+      });
       cb();
     });
   }
@@ -34,13 +37,21 @@ class ParserStream extends Transform {
     if (eventName === 'entry') {
       return Transform.prototype.on.call(this, 'data', fn);
     }
+
     return Transform.prototype.on.call(this, eventName, fn);
   }
 
   drainAll() {
     this.unzipStream.drainAll();
 
-    return this.pipe(new Transform({ objectMode: true, transform: (d, e, cb) => { cb(); } }));
+    return this.pipe(
+      new Transform({
+        objectMode: true,
+        transform: (d, e, cb) => {
+          cb();
+        },
+      })
+    );
   }
 }
 

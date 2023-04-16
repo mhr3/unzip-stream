@@ -1,45 +1,48 @@
+/* eslint-disable no-case-declarations, no-console, no-bitwise, max-lines, no-underscore-dangle */
 const binary = require('binary');
 const stream = require('stream');
-const Transform = require('stream').Transform;
+const { Transform } = require('stream');
 const zlib = require('zlib');
 const MatcherStream = require('./matcher-stream');
 const Entry = require('./entry');
 
 const states = {
-  STREAM_START:                         0,
-  START:                                1,
-  LOCAL_FILE_HEADER:                    2,
-  LOCAL_FILE_HEADER_SUFFIX:             3,
-  FILE_DATA:                            4,
-  FILE_DATA_END:                        5,
-  DATA_DESCRIPTOR:                      6,
-  CENTRAL_DIRECTORY_FILE_HEADER:        7,
+  STREAM_START: 0,
+  START: 1,
+  LOCAL_FILE_HEADER: 2,
+  LOCAL_FILE_HEADER_SUFFIX: 3,
+  FILE_DATA: 4,
+  FILE_DATA_END: 5,
+  DATA_DESCRIPTOR: 6,
+  CENTRAL_DIRECTORY_FILE_HEADER: 7,
   CENTRAL_DIRECTORY_FILE_HEADER_SUFFIX: 8,
-  CDIR64_END:                           9,
-  CDIR64_END_DATA_SECTOR:               10,
-  CDIR64_LOCATOR:                       11,
-  CENTRAL_DIRECTORY_END:                12,
-  CENTRAL_DIRECTORY_END_COMMENT:        13,
-  TRAILING_JUNK:                        14,
+  CDIR64_END: 9,
+  CDIR64_END_DATA_SECTOR: 10,
+  CDIR64_LOCATOR: 11,
+  CENTRAL_DIRECTORY_END: 12,
+  CENTRAL_DIRECTORY_END_COMMENT: 13,
+  TRAILING_JUNK: 14,
 
-  ERROR: 99
-}
+  ERROR: 99,
+};
 
 const FOUR_GIGS = 4294967296;
 
-const SIG_LOCAL_FILE_HEADER  = 0x04034b50;
-const SIG_DATA_DESCRIPTOR    = 0x08074b50;
-const SIG_CDIR_RECORD        = 0x02014b50;
-const SIG_CDIR64_RECORD_END  = 0x06064b50;
+const SIG_LOCAL_FILE_HEADER = 0x04034b50;
+const SIG_DATA_DESCRIPTOR = 0x08074b50;
+const SIG_CDIR_RECORD = 0x02014b50;
+const SIG_CDIR64_RECORD_END = 0x06064b50;
 const SIG_CDIR64_LOCATOR_END = 0x07064b50;
-const SIG_CDIR_RECORD_END    = 0x06054b50;
+const SIG_CDIR_RECORD_END = 0x06054b50;
 
-const cp437 = '\u0000☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼ !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~⌂ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ';
+const cp437 =
+  '\u0000☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼ !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~⌂ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ';
 
 class UnzipStream extends Transform {
   constructor(opts) {
     super();
     if (!(this instanceof UnzipStream)) {
+      // eslint-disable-next-line no-constructor-return
       return new UnzipStream(opts);
     }
 
@@ -72,7 +75,8 @@ class UnzipStream extends Transform {
         requiredLength = 42;
         break;
       case states.CENTRAL_DIRECTORY_FILE_HEADER_SUFFIX:
-        requiredLength = this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength + this.parsedEntity.fileCommentLength;
+        requiredLength =
+          this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength + this.parsedEntity.fileCommentLength;
         break;
       case states.CDIR64_END:
         requiredLength = 52;
@@ -97,6 +101,7 @@ class UnzipStream extends Transform {
         if (this.options.debug) {
           console.log(`found ${chunk.length} bytes of TRAILING_JUNK`);
         }
+
         return chunk.length;
       default:
         return chunk.length;
@@ -134,7 +139,7 @@ class UnzipStream extends Transform {
               let toSkip = 4;
 
               for (let i = 1; i < 4 && remaining !== 0; i++) {
-                remaining = remaining >>> 8;
+                remaining >>>= 8;
                 if ((remaining & 0xff) === 0x50) {
                   toSkip = i;
                   break;
@@ -144,6 +149,7 @@ class UnzipStream extends Transform {
               if (this.options.debug) {
                 console.log(`Skipped ${this.skippedBytes} bytes`);
               }
+
               return toSkip;
             }
             this.state = states.ERROR;
@@ -156,13 +162,18 @@ class UnzipStream extends Transform {
               } catch (e) {
                 console.error(e);
               }
-              console.log(`Unexpected signature in zip file: 0x${sig.toString(16)} "${asString}" skipped ${this.skippedBytes} bytes`);
+              console.log(
+                `Unexpected signature in zip file: 0x${sig.toString(16)} "${asString}" skipped ${
+                  this.skippedBytes
+                } bytes`
+              );
             }
             this.emit('error', new Error(errMsg));
 
             return chunk.length;
         }
         this.skippedBytes = 0;
+
         return requiredLength;
 
       case states.LOCAL_FILE_HEADER:
@@ -174,29 +185,33 @@ class UnzipStream extends Transform {
       case states.LOCAL_FILE_HEADER_SUFFIX: {
         const entry = new Entry();
         const isUtf8 = (this.parsedEntity.flags & 0x800) !== 0;
-        const extraDataBuffer = chunk.slice(this.parsedEntity.fileNameLength, this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength);
+        const extraDataBuffer = chunk.slice(
+          this.parsedEntity.fileNameLength,
+          this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength
+        );
         const extra = this._readExtraFields(extraDataBuffer);
         entry.path = this._decodeString(chunk.slice(0, this.parsedEntity.fileNameLength), isUtf8);
 
-        if (extra && extra.parsed) {
+        if (extra?.parsed) {
           if (extra.parsed.path && !isUtf8) {
-              entry.path = extra.parsed.path;
+            entry.path = extra.parsed.path;
           }
-          if (Number.isFinite(extra.parsed.uncompressedSize) && this.parsedEntity.uncompressedSize === FOUR_GIGS-1) {
-              this.parsedEntity.uncompressedSize = extra.parsed.uncompressedSize;
+          if (Number.isFinite(extra.parsed.uncompressedSize) && this.parsedEntity.uncompressedSize === FOUR_GIGS - 1) {
+            this.parsedEntity.uncompressedSize = extra.parsed.uncompressedSize;
           }
-          if (Number.isFinite(extra.parsed.compressedSize) && this.parsedEntity.compressedSize === FOUR_GIGS-1) {
-              this.parsedEntity.compressedSize = extra.parsed.compressedSize;
+          if (Number.isFinite(extra.parsed.compressedSize) && this.parsedEntity.compressedSize === FOUR_GIGS - 1) {
+            this.parsedEntity.compressedSize = extra.parsed.compressedSize;
           }
         }
         this.parsedEntity.extra = extra.parsed || {};
 
         if (this.options.debug) {
-          const debugObj = Object.assign({}, this.parsedEntity, {
-              path: entry.path,
-              flags: '0x' + this.parsedEntity.flags.toString(16),
-              extraFields: extra && extra.debug
-          });
+          const debugObj = {
+            ...this.parsedEntity,
+            path: entry.path,
+            flags: `0x${this.parsedEntity.flags.toString(16)}`,
+            extraFields: extra?.debug,
+          };
           console.log(`decoded LOCAL_FILE_HEADER: ${JSON.stringify(debugObj, null, 2)}`);
         }
         this._prepareOutStream(this.parsedEntity, entry);
@@ -216,16 +231,20 @@ class UnzipStream extends Transform {
       case states.CENTRAL_DIRECTORY_FILE_HEADER_SUFFIX: {
         // got file name in chunk[0..]
         const isUtf8 = (this.parsedEntity.flags & 0x800) !== 0;
-        const extraDataBuffer = chunk.slice(this.parsedEntity.fileNameLength, this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength);
+        const extraDataBuffer = chunk.slice(
+          this.parsedEntity.fileNameLength,
+          this.parsedEntity.fileNameLength + this.parsedEntity.extraFieldLength
+        );
         const extra = this._readExtraFields(extraDataBuffer);
         let path = this._decodeString(chunk.slice(0, this.parsedEntity.fileNameLength), isUtf8);
-        if (extra && extra.parsed && extra.parsed.path && !isUtf8) {
+        if (extra?.parsed?.path && !isUtf8) {
           path = extra.parsed.path;
         }
         this.parsedEntity.extra = extra.parsed;
 
-        const isUnix = ((this.parsedEntity.versionMadeBy & 0xff00) >> 8) === 3;
-        let unixAttrs, isSymlink;
+        const isUnix = (this.parsedEntity.versionMadeBy & 0xff00) >> 8 === 3;
+        let unixAttrs;
+        let isSymlink;
 
         if (isUnix) {
           unixAttrs = this.parsedEntity.externalFileAttributes >>> 16;
@@ -233,13 +252,14 @@ class UnzipStream extends Transform {
           isSymlink = (fileType & 0o12) === 0o12; // __S_IFLNK
         }
         if (this.options.debug) {
-          const debugObj = Object.assign({}, this.parsedEntity, {
-            path: path,
-            flags: '0x' + this.parsedEntity.flags.toString(16),
-            unixAttrs: unixAttrs && '0' + unixAttrs.toString(8),
-            isSymlink: isSymlink,
+          const debugObj = {
+            ...this.parsedEntity,
+            path,
+            flags: `0x${this.parsedEntity.flags.toString(16)}`,
+            unixAttrs: unixAttrs && `0${unixAttrs.toString(8)}`,
+            isSymlink,
             extraFields: extra.debug,
-          });
+          };
           console.log(`decoded CENTRAL_DIRECTORY_FILE_HEADER: ${JSON.stringify(debugObj, null, 2)}`);
         }
         this.state = states.START;
@@ -283,49 +303,55 @@ class UnzipStream extends Transform {
 
       default:
         console.log(`didn't handle state #${this.state} discarding`);
+
         return chunk.length;
     }
   }
 
   _prepareOutStream(vars, entry) {
-    const isDirectory = vars.uncompressedSize === 0 && /[\/\\]$/.test(entry.path);
+    const isDirectory = vars.uncompressedSize === 0 && /[/\\]$/.test(entry.path);
     // protect against malicious zip files which want to extract to parent dirs
+    // eslint-disable-next-line no-param-reassign
     entry.path = entry.path.replace(/^([/\\]*[.]+[/\\]+)*[/\\]*/, '');
+    // eslint-disable-next-line no-param-reassign
     entry.type = isDirectory ? 'Directory' : 'File';
+    // eslint-disable-next-line no-param-reassign
     entry.isDirectory = isDirectory;
 
     const fileSizeKnown = !(vars.flags & 0x08);
     if (fileSizeKnown) {
+      // eslint-disable-next-line no-param-reassign
       entry.size = vars.uncompressedSize;
     }
 
     const isVersionSupported = vars.versionsNeededToExtract <= 45;
+    const limit = fileSizeKnown ? vars.compressedSize : -1;
 
     this.outStreamInfo = {
       stream: null,
-      limit: fileSizeKnown ? vars.compressedSize : -1,
-      written: 0
+      limit,
+      written: 0,
     };
 
     if (!fileSizeKnown) {
       const pattern = Buffer.alloc(4);
       pattern.writeUInt32LE(SIG_DATA_DESCRIPTOR, 0);
-      const zip64Mode = vars.extra.zip64Mode;
+      const { zip64Mode } = vars.extra;
       const extraSize = zip64Mode ? 20 : 12;
       const searchPattern = {
-        pattern: pattern,
-        requiredExtraSize: extraSize
-      }
+        pattern,
+        requiredExtraSize: extraSize,
+      };
 
       const matcherStream = new MatcherStream(searchPattern, (matchedChunk, sizeSoFar) => {
-        const vars = this._readDataDescriptor(matchedChunk, zip64Mode);
+        const data = this._readDataDescriptor(matchedChunk, zip64Mode);
 
-        let compressedSizeMatches = vars.compressedSize === sizeSoFar;
+        let compressedSizeMatches = data.compressedSize === sizeSoFar;
         // let's also deal with archives with 4GiB+ files without zip64
         if (!zip64Mode && !compressedSizeMatches && sizeSoFar >= FOUR_GIGS) {
           let overflown = sizeSoFar - FOUR_GIGS;
           while (overflown >= 0) {
-            compressedSizeMatches = vars.compressedSize === overflown;
+            compressedSizeMatches = data.compressedSize === overflown;
             if (compressedSizeMatches) {
               break;
             }
@@ -344,6 +370,7 @@ class UnzipStream extends Transform {
           this.data = matchedChunk.slice(sliceOffset);
         }
 
+        // eslint-disable-next-line consistent-return
         return true;
       });
       this.outStreamInfo.stream = matcherStream;
@@ -351,12 +378,16 @@ class UnzipStream extends Transform {
       this.outStreamInfo.stream = new stream.PassThrough();
     }
 
-    const isEncrypted = (vars.flags & 0x01) || (vars.flags & 0x40);
+    const isEncrypted = vars.flags & 0x01 || vars.flags & 0x40;
 
     if (isEncrypted || !isVersionSupported) {
-      const message = isEncrypted ? 'Encrypted files are not supported!'
-        : (`Zip version ${Math.floor(vars.versionsNeededToExtract / 10)}.${vars.versionsNeededToExtract % 10} is not supported`);
+      const message = isEncrypted
+        ? 'Encrypted files are not supported!'
+        : `Zip version ${Math.floor(vars.versionsNeededToExtract / 10)}.${
+            vars.versionsNeededToExtract % 10
+          } is not supported`;
 
+      // eslint-disable-next-line no-param-reassign
       entry.skip = true;
       setImmediate(() => {
         entry.emit('error', new Error(message));
@@ -385,8 +416,10 @@ class UnzipStream extends Transform {
     }
   }
 
+  // eslint-disable-next-line class-methods-use-this
   _readFile(data) {
-    const vars = binary.parse(data)
+    const { vars } = binary
+      .parse(data)
       .word16lu('versionsNeededToExtract')
       .word16lu('flags')
       .word16lu('compressionMethod')
@@ -396,8 +429,7 @@ class UnzipStream extends Transform {
       .word32lu('compressedSize')
       .word32lu('uncompressedSize')
       .word16lu('fileNameLength')
-      .word16lu('extraFieldLength')
-      .vars;
+      .word16lu('extraFieldLength');
 
     return vars;
   }
@@ -414,25 +446,21 @@ class UnzipStream extends Transform {
     let offset = 0;
 
     while (index < data.length) {
-      const vars = binary.parse(data)
-        .skip(index)
-        .word16lu('extraId')
-        .word16lu('extraSize')
-        .vars;
+      const { vars } = binary.parse(data).skip(index).word16lu('extraId').word16lu('extraSize');
 
       index += 4;
 
-      let fieldType = undefined;
+      let fieldType;
 
       switch (vars.extraId) {
         case 0x0001:
           fieldType = 'Zip64 extended information extra field';
-          const z64vars = binary.parse(data.slice(index, index+vars.extraSize))
+          const z64vars = binary
+            .parse(data.slice(index, index + vars.extraSize))
             .word64lu('uncompressedSize')
             .word64lu('compressedSize')
             .word64lu('offsetToLocalHeader')
-            .word32lu('diskStartNumber')
-            .vars;
+            .word32lu('diskStartNumber').vars;
           if (z64vars.uncompressedSize !== null) {
             extra.uncompressedSize = z64vars.uncompressedSize;
           }
@@ -466,7 +494,7 @@ class UnzipStream extends Transform {
           if (fieldVer === 1) {
             offset = 1;
             // TODO: should be checking this against our path buffer
-            const nameCrc32 = data.readUInt32LE(index + offset);
+            // const nameCrc32 = data.readUInt32LE(index + offset);
             offset += 4;
             const pathBuffer = data.slice(index + offset);
             extra.path = pathBuffer.toString();
@@ -533,11 +561,11 @@ class UnzipStream extends Transform {
           offset = 0;
 
           if (vars.extraSize >= 14) {
-            const crc = data.readUInt32LE(index + offset);
+            // const crc = data.readUInt32LE(index + offset);
             offset += 4;
             const mode = data.readUInt16LE(index + offset);
             offset += 2;
-            const sizdev = data.readUInt32LE(index + offset);
+            // const sizdev = data.readUInt32LE(index + offset);
             offset += 4;
             const uid = data.readUInt16LE(index + offset);
             offset += 2;
@@ -555,13 +583,15 @@ class UnzipStream extends Transform {
             }
           }
           break;
+        default:
+          break;
       }
 
       if (this.options.debug) {
         result.debug.push({
-          extraId: '0x' + vars.extraId.toString(16),
+          extraId: `0x${vars.extraId.toString(16)}`,
           description: fieldType,
-          data: data.slice(index, index + vars.extraSize).inspect()
+          data: data.slice(index, index + vars.extraSize).inspect(),
         });
       }
 
@@ -571,30 +601,33 @@ class UnzipStream extends Transform {
     return result;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   _readDataDescriptor(data, zip64Mode) {
     if (zip64Mode) {
-      const vars = binary.parse(data)
+      const { vars } = binary
+        .parse(data)
         .word32lu('dataDescriptorSignature')
         .word32lu('crc32')
         .word64lu('compressedSize')
-        .word64lu('uncompressedSize')
-        .vars;
+        .word64lu('uncompressedSize');
 
       return vars;
     }
 
-    const vars = binary.parse(data)
+    const { vars } = binary
+      .parse(data)
       .word32lu('dataDescriptorSignature')
       .word32lu('crc32')
       .word32lu('compressedSize')
-      .word32lu('uncompressedSize')
-      .vars;
+      .word32lu('uncompressedSize');
 
     return vars;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   _readCentralDirectoryEntry(data) {
-    const vars = binary.parse(data)
+    const { vars } = binary
+      .parse(data)
       .word16lu('versionMadeBy')
       .word16lu('versionsNeededToExtract')
       .word16lu('flags')
@@ -610,14 +643,15 @@ class UnzipStream extends Transform {
       .word16lu('diskNumber')
       .word16lu('internalFileAttributes')
       .word32lu('externalFileAttributes')
-      .word32lu('offsetToLocalFileHeader')
-      .vars;
+      .word32lu('offsetToLocalFileHeader');
 
     return vars;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   _readEndOfCentralDirectory64(data) {
-    const vars = binary.parse(data)
+    const { vars } = binary
+      .parse(data)
       .word64lu('centralDirectoryRecordSize')
       .word16lu('versionMadeBy')
       .word16lu('versionsNeededToExtract')
@@ -626,22 +660,22 @@ class UnzipStream extends Transform {
       .word64lu('centralDirectoryEntries')
       .word64lu('totalCentralDirectoryEntries')
       .word64lu('sizeOfCentralDirectory')
-      .word64lu('offsetToStartOfCentralDirectory')
-      .vars;
+      .word64lu('offsetToStartOfCentralDirectory');
 
     return vars;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   _readEndOfCentralDirectory(data) {
-    const vars = binary.parse(data)
+    const { vars } = binary
+      .parse(data)
       .word16lu('diskNumber')
       .word16lu('diskStart')
       .word16lu('centralDirectoryEntries')
       .word16lu('totalCentralDirectoryEntries')
       .word32lu('sizeOfCentralDirectory')
       .word32lu('offsetToStartOfCentralDirectory')
-      .word16lu('commentLength')
-      .vars;
+      .word16lu('commentLength');
 
     return vars;
   }
@@ -665,6 +699,7 @@ class UnzipStream extends Transform {
 
   _parseOrOutput(encoding, cb) {
     let consume;
+    // eslint-disable-next-line no-cond-assign
     while ((consume = this.processDataChunk(this.data)) > 0) {
       this.data = this.data.subarray(consume);
       if (this.data.length === 0) {
@@ -699,14 +734,17 @@ class UnzipStream extends Transform {
 
         this.outStreamInfo.written += packet.length;
         const outputStream = this.outStreamInfo.stream;
+        // eslint-disable-next-line consistent-return
         outputStream.write(packet, encoding, () => {
           if (this.state === states.FILE_DATA_END) {
             this.state = states.START;
+
             return outputStream.end(cb);
           }
           cb();
         });
       }
+
       // we've written to the output stream, letting that write deal with the callback
       return;
     }
@@ -740,9 +778,12 @@ class UnzipStream extends Transform {
 
   _flush(cb) {
     if (this.data.length > 0) {
+      // eslint-disable-next-line consistent-return
       this._parseOrOutput('buffer', () => {
         if (this.data.length > 0) {
-          return setImmediate(() => { this._flush(cb); });
+          return setImmediate(() => {
+            this._flush(cb);
+          });
         }
         cb();
       });
@@ -751,6 +792,7 @@ class UnzipStream extends Transform {
     }
 
     if (this.state === states.FILE_DATA) {
+      // eslint-disable-next-line consistent-return
       return cb(new Error('Stream finished in an invalid state, uncompression failed'));
     }
 
