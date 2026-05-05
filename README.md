@@ -1,4 +1,4 @@
-# unzip-stream [![Build Status](https://travis-ci.org/mhr3/unzip-stream.svg?branch=master)](https://travis-ci.org/mhr3/unzip-stream)
+# unzip-stream ![Build Status](https://github.com/mhr3/unzip-stream/actions/workflows/ci.yml/badge.svg?branch=master)
 
 Streaming cross-platform unzip tool written in node.js.
 

@@ -3,4 +3,4 @@
 /test
 /testData*
 *.zip
-.travis.yml
+/.github
